@@ -7,12 +7,17 @@ const JWT_SECRET = process.env.JWT_SECRET as string
 
 export const signup = async (req, res) => {
   try {
-    const { email, password, name } = req.body
+   const { email, password, name, phone } = req.body
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
     const user = await prisma.user.create({
-      data: { email, password: hashedPassword, name }
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        phone
+      }
     })
 
     // remove password from response
