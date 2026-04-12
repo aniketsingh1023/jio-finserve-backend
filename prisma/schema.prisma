@@ -8,11 +8,67 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  phone     String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String             @id @default(uuid())
+  email           String             @unique
+  password        String
+  name            String
+  phone           String?            @unique
+  gender          String?
+  dob             DateTime?
+  address         String?
+  city            String?
+  pincode         String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  loanApplications LoanApplication[]
+}
+
+model LoanApplication {
+  id                 String   @id @default(uuid())
+  referenceId        String   @unique @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Details
+  fullName           String
+  email              String
+  phone              String
+  dob                DateTime?
+  gender             String?
+  address            String?
+  city               String?
+  pincode            String?
+  
+  // Loan Details
+  loanType           String
+  loanAmount         Float
+  companyName        String?
+  monthlyIncome      Float?
+  existingEmi        Float?
+  primaryBank        String?
+  cibilScore         String?
+  bankStatementPdf   String?
+  
+  // KYC Details
+  aadharNumber       String?
+  panNumber          String?
+  aadharFrontImage   String?
+  aadharBackImage    String?
+  aadharPdf          String?
+  panCardImage       String?
+  panCardPdf         String?
+  nomineeName        String?
+  nomineeRelation    String?
+  
+  // Payment Details
+  paymentMethod      String?
+  cardNumber         String?
+  expiryDate         String?
+  cvv                String?
+  
+  // Application Status
+  status             String   @default("Pending")
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }

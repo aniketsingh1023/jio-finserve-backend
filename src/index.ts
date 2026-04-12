@@ -2,6 +2,8 @@ import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import authRoutes from "./routes/auth.routes"
+import userRoutes from "./routes/user.routes"
+import loanApplicationRoutes from "./routes/loan-application.routes"
 
 const app = express()
 
@@ -59,6 +61,12 @@ app.get("/health", (req, res) => {
 
 // Auth routes
 app.use("/api/auth", authRoutes)
+
+// User routes
+app.use("/api/users", userRoutes)
+
+// Loan application routes
+app.use("/api/loan-applications", loanApplicationRoutes)
 
 // 404 handler 
 app.use((req, res) => {
