@@ -18,10 +18,8 @@ if (!JWT_SECRET) {
 export const signup = async (req: any, res: any) => {
   try {
     console.log("========== SIGNUP REQUEST START ==========");
-    console.log("Signup route hit");
-    console.log("Request body:", req.body);
 
-    const { email, password, name, phone } = req.body;
+    const { email, password, name, phone, city, address, pincode } = req.body;
 
     // Validate request body
     const validation = validateSignup(req.body);
@@ -54,12 +52,19 @@ export const signup = async (req: any, res: any) => {
         password: hashedPassword,
         name,
         phone: phone || null,
+        city: city || null,
+        address: address || null,
+        pincode: pincode || null,
       },
     });
+
     console.log("User created successfully:", {
       id: user.id,
       email: user.email,
       name: user.name,
+      city: user.city,
+      address: user.address,
+      pincode: user.pincode,
     });
 
     // Generate JWT token
@@ -71,8 +76,6 @@ export const signup = async (req: any, res: any) => {
 
     // Remove password from response
     const { password: _, ...safeUser } = user;
-
-    console.log("Sending signup success response");
     console.log("=========== SIGNUP REQUEST END ===========");
 
     res.status(201).json({
@@ -145,8 +148,6 @@ export const login = async (req: any, res: any) => {
 
     // Remove password from response
     const { password: _, ...safeUser } = user;
-
-    console.log("Sending login success response");
     console.log("============ LOGIN REQUEST END ============");
 
     res.status(200).json({
@@ -155,9 +156,7 @@ export const login = async (req: any, res: any) => {
       user: safeUser,
     });
   } catch (err) {
-    console.error("Login error occurred:");
     console.error(err);
-    console.log("============ LOGIN REQUEST FAILED ==========");
     return handleError(err, res);
   }
 };

@@ -1,8 +1,3 @@
-/**
- * Auth Validators
- * Centralized validation logic for authentication endpoints
- */
-
 interface ValidationError {
   field: string;
   message: string;
@@ -22,12 +17,20 @@ const isValidEmail = (email: string): boolean => {
 };
 
 /**
- * Validate phone format (international or standard)
+ * Validate phone format
  */
 const isValidPhone = (phone: string): boolean => {
-  // Accepts formats: +91-9999999999, 9999999999, +91 9999999999
-  const phoneRegex = /^(?:\+\d{1,3})?[\s-]?\d{10}$/;
-  return phoneRegex.test(phone.replace(/\s|-/g, ''));
+  const normalizedPhone = phone.replace(/[\s-]/g, '');
+  const phoneRegex = /^(?:\+\d{1,3})?\d{10}$/;
+  return phoneRegex.test(normalizedPhone);
+};
+
+/**
+ * Validate Indian pincode format
+ */
+const isValidPincode = (pincode: string): boolean => {
+  const pincodeRegex = /^\d{6}$/;
+  return pincodeRegex.test(pincode);
 };
 
 /**
@@ -39,7 +42,7 @@ export const validateSignup = (data: any): ValidationResult => {
   // Validate email
   if (!data.email || typeof data.email !== 'string') {
     errors.push({ field: 'email', message: 'Email is required' });
-  } else if (!isValidEmail(data.email)) {
+  } else if (!isValidEmail(data.email.trim())) {
     errors.push({ field: 'email', message: 'Invalid email format' });
   }
 
@@ -47,7 +50,10 @@ export const validateSignup = (data: any): ValidationResult => {
   if (!data.password || typeof data.password !== 'string') {
     errors.push({ field: 'password', message: 'Password is required' });
   } else if (data.password.length < 6) {
-    errors.push({ field: 'password', message: 'Password must be at least 6 characters' });
+    errors.push({
+      field: 'password',
+      message: 'Password must be at least 6 characters',
+    });
   }
 
   // Validate name
@@ -58,12 +64,39 @@ export const validateSignup = (data: any): ValidationResult => {
   }
 
   // Validate phone (optional but valid if provided)
-  if (data.phone) {
+  if (data.phone !== undefined && data.phone !== null && data.phone !== '') {
     if (typeof data.phone !== 'string') {
       errors.push({ field: 'phone', message: 'Phone must be a string' });
-    } else if (!isValidPhone(data.phone)) {
+    } else if (!isValidPhone(data.phone.trim())) {
       errors.push({ field: 'phone', message: 'Invalid phone format' });
     }
+  }
+
+  // Validate city
+  if (!data.city || typeof data.city !== 'string') {
+    errors.push({ field: 'city', message: 'City is required' });
+  } else if (data.city.trim().length === 0) {
+    errors.push({ field: 'city', message: 'City cannot be empty' });
+  }
+
+  // Validate address
+  if (!data.address || typeof data.address !== 'string') {
+    errors.push({ field: 'address', message: 'Address is required' });
+  } else if (data.address.trim().length < 5) {
+    errors.push({
+      field: 'address',
+      message: 'Address must be at least 5 characters',
+    });
+  }
+
+  // Validate pincode
+  if (!data.pincode || typeof data.pincode !== 'string') {
+    errors.push({ field: 'pincode', message: 'Pincode is required' });
+  } else if (!isValidPincode(data.pincode.trim())) {
+    errors.push({
+      field: 'pincode',
+      message: 'Pincode must be exactly 6 digits',
+    });
   }
 
   return {
@@ -81,7 +114,7 @@ export const validateLogin = (data: any): ValidationResult => {
   // Validate email
   if (!data.email || typeof data.email !== 'string') {
     errors.push({ field: 'email', message: 'Email is required' });
-  } else if (!isValidEmail(data.email)) {
+  } else if (!isValidEmail(data.email.trim())) {
     errors.push({ field: 'email', message: 'Invalid email format' });
   }
 
@@ -89,7 +122,10 @@ export const validateLogin = (data: any): ValidationResult => {
   if (!data.password || typeof data.password !== 'string') {
     errors.push({ field: 'password', message: 'Password is required' });
   } else if (data.password.length < 6) {
-    errors.push({ field: 'password', message: 'Password must be at least 6 characters' });
+    errors.push({
+      field: 'password',
+      message: 'Password must be at least 6 characters',
+    });
   }
 
   return {
