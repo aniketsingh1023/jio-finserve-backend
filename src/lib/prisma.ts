@@ -1,23 +1,15 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@prisma/client";
 
-export const prisma = new PrismaClient({
-  log: ['error', 'warn'],
-})
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+};
 
-// Handle connection errors
-prisma.$on('error', (e) => {
-  console.error('Prisma Client Error:', e);
-});
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: ["error"],
+  });
 
-// Handle disconnection
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, disconnecting Prisma Client');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, disconnecting Prisma Client');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
