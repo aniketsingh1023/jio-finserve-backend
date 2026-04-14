@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { AppError, handleError } from "../utils/errors";
+import { uploadToCloudinary } from "../utils/upload";
 
 const nameRegex = /^[A-Za-z ]+$/;
 const cityRegex = /^[A-Za-z ]+$/;
@@ -192,15 +193,70 @@ const validateLoanApplication = (body: any) => {
 
 /**
  * POST /api/loan-applications
+ * Accepts multipart form data with optional PDF files for aadhar and pan
  */
 export const createLoanApplication = async (req: any, res: any) => {
+  let uploadedUrls: { aadharPdf?: string; panCardPdf?: string } = {};
+
   try {
     const userId = req.user.userId;
+
+    // Validate required form fields
     const errors = validateLoanApplication(req.body);
 
     if (errors.length > 0) {
       throw new AppError(errors.join(", "), 400);
     }
+
+    // Validate and upload PDF files if provided
+    const files = (req.files || {}) as {
+  aadhar?: Express.Multer.File[];
+  pan?: Express.Multer.File[];
+};
+
+if (files?.aadhar?.[0]) {
+  const aadharFile = files.aadhar[0];
+
+  if (aadharFile.mimetype !== "application/pdf") {
+    throw new AppError("Aadhar file must be a PDF", 400);
+  }
+
+  try {
+    const uploadResult = await uploadToCloudinary(
+      aadharFile.buffer,
+      `aadhar-${userId}-${Date.now()}`,
+      { folder: "loan-documents/aadhar" }
+    );
+    uploadedUrls.aadharPdf = uploadResult.secure_url;
+  } catch (uploadError) {
+    throw new AppError(
+      `Failed to upload Aadhar PDF: ${(uploadError as Error).message}`,
+      500
+    );
+  }
+}
+
+if (files?.pan?.[0]) {
+  const panFile = files.pan[0];
+
+  if (panFile.mimetype !== "application/pdf") {
+    throw new AppError("PAN file must be a PDF", 400);
+  }
+
+  try {
+    const uploadResult = await uploadToCloudinary(
+      panFile.buffer,
+      `pan-${userId}-${Date.now()}`,
+      { folder: "loan-documents/pan" }
+    );
+    uploadedUrls.panCardPdf = uploadResult.secure_url;
+  } catch (uploadError) {
+    throw new AppError(
+      `Failed to upload PAN PDF: ${(uploadError as Error).message}`,
+      500
+    );
+  }
+}
 
     const {
       fullName,
@@ -266,9 +322,9 @@ export const createLoanApplication = async (req: any, res: any) => {
         panNumber: String(panNumber).trim().toUpperCase(),
         aadharFrontImage: aadharFrontImage || null,
         aadharBackImage: aadharBackImage || null,
-        aadharPdf: aadharPdf || null,
+        aadharPdf: uploadedUrls.aadharPdf || aadharPdf || null,
         panCardImage: panCardImage || null,
-        panCardPdf: panCardPdf || null,
+        panCardPdf: uploadedUrls.panCardPdf || panCardPdf || null,
         nomineeName: nomineeName.trim(),
         nomineeRelation: nomineeRelation?.trim() || null,
         paymentMethod,
@@ -371,6 +427,105 @@ export const getLoanApplicationById = async (req: any, res: any) => {
 
     res.status(200).json({
       message: "Application retrieved successfully",
+      application,
+    });
+  } catch (err) {
+    return handleError(err, res);
+  }
+};
+
+/**
+ * GET /api/loan-applications/admin/all
+ * Get all loan applications (admin endpoint)
+ */
+export const getAllApplications = async (_req: any, res: any) => {
+  try {
+    const applications = await prisma.loanApplication.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      message: "All applications retrieved successfully",
+      applications,
+      count: applications.length,
+    });
+  } catch (err) {
+    return handleError(err, res);
+  }
+};
+
+/**
+ * PUT /api/loan-applications/:id/admin
+ * Update loan application status (admin endpoint)
+ */
+export const updateApplicationStatus = async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!id) {
+      throw new AppError("Application id is required", 400);
+    }
+
+    if (!status) {
+      throw new AppError("Status is required", 400);
+    }
+
+    const validStatuses = ["Pending", "Approved", "Rejected"];
+    if (!validStatuses.includes(status)) {
+      throw new AppError(`Status must be one of: ${validStatuses.join(", ")}`, 400);
+    }
+
+    const application = await prisma.loanApplication.update({
+      where: { id },
+      data: { status },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      message: "Application status updated successfully",
+      application,
+    });
+  } catch (err) {
+    return handleError(err, res);
+  }
+};
+
+/**
+ * DELETE /api/loan-applications/:id/admin
+ * Delete loan application (admin endpoint)
+ */
+export const deleteLoanApplication = async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      throw new AppError("Application id is required", 400);
+    }
+
+    const application = await prisma.loanApplication.delete({
+      where: { id },
+    });
+
+    res.status(200).json({
+      message: "Application deleted successfully",
       application,
     });
   } catch (err) {

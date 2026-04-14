@@ -80,3 +80,56 @@ export const getAllContactMessages = async (_req: any, res: any) => {
     return handleError(err, res);
   }
 };
+
+export const deleteContactMessage = async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      throw new AppError("Contact message id is required", 400);
+    }
+
+    const message = await prisma.contactMessage.delete({
+      where: { id },
+    });
+
+    res.status(200).json({
+      message: "Contact message deleted successfully",
+      data: message,
+    });
+  } catch (err) {
+    return handleError(err, res);
+  }
+};
+
+export const updateContactStatus = async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!id) {
+      throw new AppError("Contact message id is required", 400);
+    }
+
+    if (!status) {
+      throw new AppError("Status is required", 400);
+    }
+
+    const validStatuses = ["Unread", "Read"];
+    if (!validStatuses.includes(status)) {
+      throw new AppError(`Status must be one of: ${validStatuses.join(", ")}`, 400);
+    }
+
+    const message = await prisma.contactMessage.update({
+      where: { id },
+      data: { status },
+    });
+
+    res.status(200).json({
+      message: "Contact message status updated successfully",
+      data: message,
+    });
+  } catch (err) {
+    return handleError(err, res);
+  }
+};

@@ -101,3 +101,67 @@ export const updateProfile = async (req: any, res: any) => {
     return handleError(err, res);
   }
 };
+
+/**
+ * GET /api/users/admin/all
+ * Get all users (admin endpoint)
+ */
+export const getAllUsers = async (_req: any, res: any) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        gender: true,
+        dob: true,
+        address: true,
+        city: true,
+        pincode: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.status(200).json({
+      message: "All users retrieved successfully",
+      users,
+      count: users.length,
+    });
+  } catch (err) {
+    return handleError(err, res);
+  }
+};
+
+/**
+ * DELETE /api/users/:id/admin
+ * Delete user (admin endpoint)
+ */
+export const deleteUser = async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      throw new AppError("User id is required", 400);
+    }
+
+    const user = await prisma.user.delete({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+      },
+    });
+
+    res.status(200).json({
+      message: "User deleted successfully",
+      user,
+    });
+  } catch (err) {
+    return handleError(err, res);
+  }
+};

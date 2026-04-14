@@ -1,5 +1,5 @@
 import express from "express";
-import { getCurrentUser, updateProfile } from "../controllers/user.controller";
+import { getCurrentUser, updateProfile, getAllUsers, deleteUser } from "../controllers/user.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = express.Router();
@@ -12,5 +12,9 @@ router.get("/me", getCurrentUser);
 
 // Update current user profile
 router.put("/me", updateProfile);
+
+// Admin routes
+router.get("/admin/all", getAllUsers);
+router.delete("/:id/admin", deleteUser);
 
 export default router;
