@@ -8,25 +8,19 @@ import {
   deleteLoanApplication,
 } from "../controllers/loan-application.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { adminMiddleware } from "../middleware/admin.middleware";
 import { loanDocumentsUpload } from "../middleware/upload.middleware";
 
 const router = express.Router();
 
-// All loan application routes require authentication
-router.use(authMiddleware);
-
-// Create a new loan application with file uploads for PDFs
-router.post("/", loanDocumentsUpload, createLoanApplication);
-
-// Get all applications for the current user
-router.get("/my", getMyApplications);
-
-// Get a specific application by ID
-router.get("/:id", getLoanApplicationById);
+// User routes
+router.post("/", authMiddleware, loanDocumentsUpload, createLoanApplication);
+router.get("/my", authMiddleware, getMyApplications);
+router.get("/:id", authMiddleware, getLoanApplicationById);
 
 // Admin routes
-router.get("/admin/all", getAllApplications);
-router.put("/:id/admin", updateApplicationStatus);
-router.delete("/:id/admin", deleteLoanApplication);
+router.get("/admin/all", adminMiddleware, getAllApplications);
+router.put("/:id/admin", adminMiddleware, updateApplicationStatus);
+router.delete("/:id/admin", adminMiddleware, deleteLoanApplication);
 
 export default router;
