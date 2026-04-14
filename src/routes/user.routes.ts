@@ -1,20 +1,21 @@
 import express from "express";
-import { getCurrentUser, updateProfile, getAllUsers, deleteUser } from "../controllers/user.controller";
+import {
+  getCurrentUser,
+  updateProfile,
+  getAllUsers,
+  deleteUser,
+} from "../controllers/user.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { adminMiddleware } from "../middleware/admin.middleware";
 
 const router = express.Router();
 
-// All user routes require authentication
-router.use(authMiddleware);
-
-// Get current user profile
-router.get("/me", getCurrentUser);
-
-// Update current user profile
-router.put("/me", updateProfile);
+// User self routes
+router.get("/me", authMiddleware, getCurrentUser);
+router.put("/me", authMiddleware, updateProfile);
 
 // Admin routes
-router.get("/admin/all", getAllUsers);
-router.delete("/:id/admin", deleteUser);
+router.get("/admin/all", adminMiddleware, getAllUsers);
+router.delete("/:id/admin", adminMiddleware, deleteUser);
 
 export default router;

@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes"
 import userRoutes from "./routes/user.routes"
 import contactRoutes from "./routes/contact.routes";
 import loanApplicationRoutes from "./routes/loan-application.routes"
+import adminRoutes from "./routes/admin.routes";
 
 const app = express()
 
@@ -71,6 +72,9 @@ app.use("/api/loan-applications", loanApplicationRoutes)
 
 //contact us page routes
 app.use("/api/contact", contactRoutes);
+
+//admin route
+app.use("/api/admin", adminRoutes);
 
 // 404 handler 
 app.use((req, res) => {
